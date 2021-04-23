@@ -1,0 +1,37 @@
+({ 
+ /***********************************************************************************************
+ * Author : Sharan Sukesh
+ * Method Name : doinit
+ * Description : This method is called everytime the component is initialized or reinitialized
+ ************************************************************************************************/
+	doInit : function(component, event, helper) {
+       //Handles the messages passed from the VF page
+      
+            helper.messageHandler(component,event,helper);
+            
+    },
+
+   
+    
+/***********************************************************************************************
+ * Author : Sharan Sukesh
+ * Method Name : PT_UploadFile_Controller
+ * Description : This method is called when event is fired on click of the confirm button, after 
+ * the request is created.
+ ************************************************************************************************/  
+   Message: function(component, event, helper) {
+       
+       var recordId = event.getParam("responseid");
+        component.set('v.recordId',recordId);
+        var message = {
+            "uploadFile" : true,
+            "recordId" : recordId
+        } ;
+        
+        helper.sendMessage(component, helper, message);
+    },
+    
+    
+  
+    
+})

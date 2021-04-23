@@ -1,0 +1,167 @@
+<!-- 
+Author : Sharan Sukesh
+Name : PT_UploadFilePage
+Description : This page is embedded in the PT_UploadFile lightning component as an iframe and is utilized to upload and attach the attachment to a record
+-->
+<apex:page controller="PT_UploadFile_Controller" id="UploadFilePage" docType="html-5.0" showHeader="false" sidebar="false">
+
+<!-- <apex:includeScript value="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" /> -->
+ <style>
+/* Styling for the standard button */
+.ChooseFileContainer {
+    position:relative;
+    display:inline;
+}
+     
+
+/*Styling for the custom button that would overlay on top of the standard choose file button */
+.OverlayButton btn{
+     right: 22px    !important;
+     left: 1.5px    !important;
+     top: 2.5px     !important;
+     width: 113px   !important;
+     position: fixed    !important;
+     border-radius: 5px !important;
+     padding-top: 3.25px    !important;
+     border-width:1.5px     !important;
+     border-color:light-grey    !important;
+} 
+     
+/*Styling for setting the button position */        
+.buttonPosition{
+    position: fixed;
+    left: 100;
+    down: 50px;
+    top: 4.5px;
+    right: 2.5px;
+}        
+        
+</style>
+    
+    <!--<apex:stylesheet value="{!URLFOR($Resource.SLDS231, 'assets/styles/salesforce-lightning-design-system.css')}" />-->
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Form used to display the apex inputfile and the custom button -->
+    <apex:includeLightning />
+   <apex:form id="theForm">
+   <!-- <div class="slds"> -->
+        <div id="startButtonDiv" class="slds-button">
+        <apex:slds >
+            <div class="slds-form-element">
+            <!-- This button is not visibile to user, it is clicked using the jquery methods described and is used to upload the file by calling the method in the controller -->
+            <apex:commandButton value="Save" action="{!uploadFile}"  id="uploadFileButton" style="display:none;"/>
+            <!-- This field is not visible to user, it is used to fetch the record ID in the controller to get and set its value -->
+            <apex:inputText id="textField" value="{!recordId}" label="recordid" style="display:none"/>
+                <apex:inputText id="textFieldTest" value="{!fileName}" label="outputtext" html-readonly="true" style="display:none"/>
+            <div>
+            <div class = "ChooseFileContainer">
+                <!--It is used to display the input file tag inside the iframe. It is set to visible only when we select a file, hence we are able to see the file name -->
+                <apex:inputfile id="fileSelectedForUpload"  onChange="sendToLC({'state': 'uploadFileSelected','fname': value,'iframe': '{!iframename}'});" value="{!objAttachment.VersionData}" filename="{!objAttachment.Title}" size="{!objAttachment.ContentSize}" contentType="{!objAttachment.FileType}" style="display:none;"></apex:inputfile>
+                <!--It is a custom button styled text box which has the look and feel of a button and is used to interact with the input file using the Jquery -->
+                <input id="CustomChooseFileButton" type="button" size="23" name="CustomChooseFileButton" value="Carica File" onclick="chooseButton();" class="btn slds-button" style=" right: 22px;
+                left: 1.5px;
+                top: 2.5px;
+                width: 113px;
+                position: fixed;
+                border-radius: 5px;
+                padding-top: 3.25px;
+                border-width:1.5px; color:white;
+                border-color:#FD5423;background-color:#FD5423"/>    
+                               
+            <br/>  
+            <!-- Uses SVG icons to display the delete icon. It is within a button class so that we are able to perform an action on click of it -->
+                <div class="buttonPosition" id="deleteButtonPress">    
+                    <button class="slds-button slds-button_icon" title="Elimina file" action="" id="deleteIconButton" onclick="deleteButton();">
+                        <svg aria-hidden="true" class="slds-icon slds-icon--small slds-icon-utility-delete slds-icon-text-error">
+                            <use xlink:href="{!URLFOR($Resource.SLDS231, 'assets/icons/utility-sprite/svg/symbols.svg#delete')}" />
+                        </svg>
+                    </button>
+                </div>
+            </div> 
+        </div>
+     </div>
+   </apex:slds>
+ </div>
+<!--</div>-->
+</apex:form>
+
+<script>
+    
+    //Used to receive message from Lightning Component
+    window.addEventListener("message", function(event) {
+        data = event.data;
+        dataId = event.data.recordId; 
+        var dat = dataId;
+        //Sets the value of the hidden text field with record ID so that we can fetch it in the controller
+        document.getElementById('{!$Component.theForm.textField}').value = dat;
+        //Used to click the upload button which invokes the method in the controller and attaches the file to the record.
+        if(typeof(event.data.uploadFile) != 'undefined' && (event.data.uploadFile == true)){
+                document.getElementById('{!$Component.theForm.uploadFileButton}').click();
+        }
+     }, false);
+    
+    //Destination to which we are sending the messages from the VF page using the URL paramenter lcHost
+    var lexOrigin = "https://{!$CurrentPage.parameters.lcHost}";  
+    console.log("lexOrigin in line 104: "+lexOrigin);
+    var data;
+    //Used to send message to Lightning component using the lexOrigin
+    function sendToLC(message) {
+        if(document.getElementById('{!$Component.theForm.fileSelectedForUpload}').value != ''){
+            console.log("in if 109: ");
+            var filename = document.getElementById('{!$Component.theForm.fileSelectedForUpload}').value;
+            var splitstr = filename.split("\\");
+            filename=splitstr[2];
+            document.getElementById('{!$Component.theForm.textFieldTest}').style.display="block";
+            document.getElementById('{!$Component.theForm.textFieldTest}').style.position="relative";
+            document.getElementById('{!$Component.theForm.textFieldTest}').style.left="119px";
+            document.getElementById('{!$Component.theForm.textFieldTest}').style.top="11.5px";
+            document.getElementById('{!$Component.theForm.textFieldTest}').style.width="450px";
+            document.getElementById('{!$Component.theForm.textFieldTest}').style.border="none";
+            document.getElementById('{!$Component.theForm.textFieldTest}').value = filename;
+        }
+        else{
+            console.log("in else 121: ");
+            // document.getElementById('{!$Component.theForm.fileSelectedForUpload}').style="display:none";
+       document.getElementById('{!$Component.theForm.textFieldTest}').style.display="none";
+
+        }
+        if(typeof(lexOrigin) != "undefined"){
+            console.log("in type check 128: ");
+            parent.postMessage(message, lexOrigin);
+            console.log("message posted");
+        }
+    }
+        
+    function deleteButton() {
+        document.getElementById('{!$Component.theForm.fileSelectedForUpload}').value="";
+        //message sent to Lightning component to reset selected flag in the component to sequence interactive outcome  
+        sendToLC({'state':'DELETE','iframe': '{!iframename}'});
+    }
+    
+    function chooseButton() {
+        //alert("Inside the line 141");
+        //document.getElementById('{!$Component.theForm.fileSelectedForUpload}').style="margin-left: 31px;margin-top: 8px;";
+        document.getElementById('{!$Component.theForm.fileSelectedForUpload}').click();
+    }
+    console.log("before sendToLC in 144");    
+    sendToLC({'state':'LOADED', 'vfHost': "{!LEFT($CurrentPage.URL,FIND('/',$CurrentPage.URL,9))}"});
+    console.log("after sendToLC in 146");
+ </script>
+  
+
+        
+ <!-- This block is rendered only when the file is processed and sends the message to the Lightning component stating that the file has been uploaded. This executes the script -->
+ <apex:pageBlock rendered="{!fileUploadProcessed == true}" id="theBlock">
+    <script>
+            //Hide pageBlock as we just need it to run <script>
+            var theBlock = document.getElementById('{!$Component.theBlock}');
+            theBlock.style.border = 'none';
+            theBlock.style.display = 'none';
+
+        //Sends the file uploaded/Error message to the lightning component with the message set in the controller
+    		console.log("before sendToLC in 160");
+            sendToLC({'state': 'fileUploadprocessed', 'message': '{!message}', 'messageType': '{!messageType}', 'iframe': '{!iframename}'});
+     console.log("after sendToLC in 160");
+     </script>
+ </apex:pageBlock>
+</html>     
+</apex:page>

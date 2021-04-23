@@ -1,0 +1,77 @@
+/***********************************************************************************************
+ * Author : Sharan Sukesh
+ * Class Name : PT_UploadFile_Controller
+ * Description : This class is used to insert and attach the attachment to the created request
+ ************************************************************************************************/  
+public with sharing class PT_UploadFile_Controller {
+    public transient ContentVersion objAttachment;
+    
+    public Boolean fileUploadProcessed{get;set;}
+    public String message{get;set;}
+    public String messageType{get;set;}
+    public String filename{get;set;}
+    public string recordId {get;set;}
+    public string iframename{get;set;}
+    PRIVATE STATIC FINAL STRING iframe ='iframe';
+
+    //Use getter so we can make attachment transient
+/***********************************************************************************************
+ * Author : Sharan Sukesh
+ * Method Name : PT_UploadFile_Controller
+ * Description : This constructor method is used to fetch the iframe from the URL passed as a
+ * parameter from the lightning component
+ ************************************************************************************************/ 
+    public ContentVersion getObjAttachment(){
+        objAttachment = new ContentVersion();
+        return objAttachment;
+    }
+    
+    
+/***********************************************************************************************
+ * Author : Sharan Sukesh
+ * Method Name : PT_UploadFile_Controller
+ * Description : This constructor method is used to fetch the iframe from the URL passed as a
+ * parameter from the lightning component
+ ************************************************************************************************/    
+        public PT_UploadFile_Controller(){
+        
+        //recTypeCon = 'pdf';
+        iframename= (String) ApexPages.currentPage().getParameters().get(iframe);
+        system.debug('@@@@iframename'+iframename);
+    }
+
+
+/***********************************************************************************************
+ * Author : Sharan Sukesh
+ * Method Name : uploadFile
+ * Description : This method is used to attach the attachment object created to the created record
+   by fetching the record ID from the URL passed from the lighting component     
+ ************************************************************************************************/
+    Public void uploadFile(){
+        try {
+          System.debug('@@@objAttachment'+objAttachment);
+          	//objAttachment.FirstPublishLocationId = (Id) recordId;
+        	filename=objAttachment.Title;
+           // system.debug('objAttachment.ParentId'+ objAttachment.ParentId );
+            ContentVersion cVersion = new ContentVersion();
+            cVersion.PathOnClient = objAttachment.Title;
+            cVersion.FirstPublishLocationId = (Id) recordId;
+            //cVersion.Title = objAttachment.Title;
+            cVersion.VersionData = objAttachment.VersionData;
+           // System.debug('objAttachment.Body in line 61==>'+objAttachment.Body);
+            Insert cVersion;
+            System.debug('cVersion in line 63==>'+cVersion);
+          // insert objAttachment;
+            message = System.Label.PT_File_SuccessMsg;
+            messageType = System.Label.PT_FileUpload_Success;
+          //  iframename= (String) ApexPages.currentPage().getParameters().get('iframe');
+
+        }catch(Exception e){
+            filename=objAttachment.Title;
+            message = e.getMessage();
+            system.debug('debug@@@@'+e.getMessage()+e.getLineNumber());
+            messageType = System.Label.PT_FileUpload_Error;
+        }
+        fileUploadProcessed = true;
+    }
+}

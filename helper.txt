@@ -1,0 +1,283 @@
+({
+    
+    /***********************************************************************************************
+ * Author : Sharan Sukesh
+ * Method Name : messageHandler
+ * Description : This method is used to handle the messages recieved from the VF page based on 
+ * the state of the message that is sent and perform the appropriate logic.
+ ************************************************************************************************/    
+    messageHandler : function(component,event,helper){
+        //Send LC Host as parameter to VF page so VF page can send message to LC;
+        //LC Host is passed to the URL as a parameter to get the host so the VF page can communicate using messages
+        
+        //alert("window.location.hostname"+window.location.hostname);
+        
+        component.set("v.lcHost", $A.get("$Label.c.PT_CommunityHost"));
+        //alert("lcHost"+component.get("v.lcHost"));
+        var recType = component.get("v.recordType");
+        
+        component.set("v.recordTypeName",recType.Name);
+        var recTypeName=component.get("v.recordTypeName");
+        var orgURL = $A.get("$Label.c.PT_Org_URL");
+        var frameSrc = orgURL+ '&lcHost=' + component.get('v.lcHost') + '&iframe=' + component.get('v.vfFrame');
+        component.set("v.frameSrc", frameSrc);
+        
+        //Listener used to listen for messages that are sent from the VF page at different points during the file upload process
+        window.addEventListener("message", function(event) {
+            // Handle the message based on the state attribute passed from the VF page
+            // This block is executed every time the component is loaded or gets initialized.    
+            if(event.data.state === $A.get("$Label.c.PT_Loaded")){
+                //Set vfHost which will be used later to send message to the VF page
+                component.set("v.vfHost", event.data.vfHost);
+            }
+            
+            
+            //This block is executed every time the delete button is pressed to cancel file selection  
+            if(event.data.state===$A.get("$Label.c.PT_Delete")){
+               
+                var iframeId = component.get("v.vfFrame");
+                if(iframeId === event.data.iframe){
+                    if(iframeId === $A.get("$Label.c.PT_FileSelectedvframe1")){
+                        component.set("v.file1selected",$A.get("$Label.c.PT_False"));
+                        component.set("v.showMessage",false);
+                        component.set("v.formatMismatch1",$A.get("$Label.c.PT_False"));
+                    }
+                    if(iframeId === $A.get("$Label.c.PT_FileSelectedvframe2")){
+                        component.set("v.file2selected",$A.get("$Label.c.PT_False"));
+                        component.set("v.showMessage",false);
+                        component.set("v.formatMismatch2",$A.get("$Label.c.PT_False"));
+                    }
+                    if(iframeId === $A.get("$Label.c.PT_FileSelectedvframe3")){
+                        component.set("v.file3selected",$A.get("$Label.c.PT_False"));
+                        component.set("v.showMessage",false);
+                        component.set("v.formatMismatch3",$A.get("$Label.c.PT_False"));
+                    }
+                    
+                }
+            }
+            
+            
+            //When a file is selected in the VF page we do the following logic
+            if(event.data.state === $A.get("$Label.c.PT_uploadFileSelected")){
+                var fileName = event.data.fname;
+                
+                if(fileName !==""){
+                    var str = JSON.stringify(fileName);
+                    var res = str.split(".");
+                    var extStr = res[res.length-1];
+                    extStr = extStr.split('"');
+                    extStr = extStr[0];
+                }
+                var fileExtension = extStr;
+                var iframeId = component.get("v.vfFrame");
+                var strExt;
+                var strErrMsg;
+                var tipoRic=component.get("v.tipoRic");//Added as per D-574
+        		
+                if(iframeId === event.data.iframe){
+                    if(recTypeName === $A.get("$Label.c.PT_Contributi_Massivi")||
+                       recTypeName === $A.get("$Label.c.PT_Richieste_Massive"))
+                    {
+                        //Added as per Defect D-574
+                    if((tipoRic === ($A.get("$Label.c.PT_RICHIESTE_RecordTypeName_PT_ACV")))||
+                       (tipoRic === ($A.get("$Label.c.PT_RICHIESTE_RecordTypeName_PT_AUT"))) ||
+                       (tipoRic === ($A.get("$Label.c.PT_RICHIESTE_RecordTypeName_PT_AVO")))||
+                       (tipoRic === ($A.get("$Label.c.PT_RICHIESTE_RecordTypeName_PT_ARS"))))
+                            {
+                               
+                                strExt = $A.get("$Label.c.PT_Upload_File_Format_ACV");
+                                strErrMsg = $A.get("$Label.c.PT_Upload_File_Display_ACV");
+                            }
+                            else{
+                                strExt = $A.get("$Label.c.PT_AllowedFiles_Contributi_Massivi");
+                                strErrMsg = $A.get("$Label.c.PT_ErrMsg_Contributi_Massivi");
+                            }
+                    }
+                    if(recTypeName === ($A.get("$Label.c.PT_RICHIESTE_RecordTypeName_PT_M03")))
+                    {
+                        strExt = $A.get("$Label.c.PT_Upload_File_Format_M03");
+                        strErrMsg = $A.get("$Label.c.PT_Upload_File_Display_M03");
+                    }
+                    if(recTypeName === ($A.get("$Label.c.PT_RICHIESTE_RecordTypeName_PT_SP2")))
+                    {
+                        strExt = $A.get("$Label.c.PT_Upload_File_Format_SP2");
+                        strErrMsg = $A.get("$Label.c.PT_Upload_File_Display_SP2");
+                    }
+                    if(recTypeName === ($A.get("$Label.c.PT_RICHIESTE_RecordTypeName_PT_MC2")))
+                    {
+                        strExt = $A.get("$Label.c.PT_Upload_File_Format_MC2");
+                        strErrMsg = $A.get("$Label.c.PT_Upload_File_Display_MC2");
+                    }
+                    if(recTypeName === ($A.get("$Label.c.PT_RICHIESTE_RecordTypeName_PT_GD1")))
+                    {
+                        strExt = $A.get("$Label.c.PT_Upload_File_Format_GD1");
+                        strErrMsg = $A.get("$Label.c.PT_Upload_File_Display_GD1");
+                    }
+                    if(recTypeName === ($A.get("$Label.c.PT_RICHIESTE_RecordTypeName_PT_M01")))
+                    {
+                        strExt = $A.get("$Label.c.PT_Upload_File_Format_M01");
+                        strErrMsg = $A.get("$Label.c.PT_Upload_File_Display_M01");
+                    }
+                    if(recTypeName === ($A.get("$Label.c.PT_RICHIESTE_RecordTypeName_PT_M02")))
+                    {
+                        strExt = $A.get("$Label.c.PT_Upload_File_Format_M02");
+                        strErrMsg = $A.get("$Label.c.PT_Upload_File_Display_M02");
+                    }
+                     if(recTypeName === "ALL")
+                    {
+                        strExt = $A.get("$Label.c.PT_AllowedFiles_Contributi_Massivi");
+                        strErrMsg = $A.get("$Label.c.PT_ErrMsg_Contributi_Massivi");
+                    }
+                    
+                    if(fileName !== ""){
+                        if(iframeId === $A.get("$Label.c.PT_FileSelectedvframe1")){
+                            component.set("v.file1selected",$A.get("$Label.c.PT_True"));
+                        }
+                        if(iframeId === $A.get("$Label.c.PT_FileSelectedvframe2")){
+                            component.set("v.file2selected",$A.get("$Label.c.PT_True"));
+                        }
+                        if(iframeId === $A.get("$Label.c.PT_FileSelectedvframe3")){
+                            component.set("v.file3selected",$A.get("$Label.c.PT_True"));
+                        }
+                    } 
+                    else{
+                        if(iframeId === $A.get("$Label.c.PT_FileSelectedvframe1")){
+                            component.set("v.file1selected",$A.get("$Label.c.PT_False"));
+                        }
+                        if(iframeId === $A.get("$Label.c.PT_FileSelectedvframe2")){
+                            component.set("v.file2selected",$A.get("$Label.c.PT_False"));
+                        }
+                        if(iframeId === $A.get("$Label.c.PT_FileSelectedvframe3")){
+                            component.set("v.file3selected",$A.get("$Label.c.PT_False"));
+                        }
+                    }
+                    
+                    if(strExt.indexOf(fileExtension) !== -1 || fileName===""){
+                        component.set("v.showMessage",false);
+                        if(iframeId === $A.get("$Label.c.PT_FileSelectedvframe1")){
+                            component.set("v.formatMismatch1",$A.get("$Label.c.PT_False"));
+                        }
+                        if(iframeId === $A.get("$Label.c.PT_FileSelectedvframe2")){
+                            component.set("v.formatMismatch2",$A.get("$Label.c.PT_False"));
+                        }
+                        if(iframeId === $A.get("$Label.c.PT_FileSelectedvframe3")){
+                            component.set("v.formatMismatch3",$A.get("$Label.c.PT_False"));
+                        }
+                    }
+                    else{
+                        component.set("v.showMessage",true);
+                        component.set("v.body",strErrMsg);
+                        if(iframeId === $A.get("$Label.c.PT_FileSelectedvframe1")){
+                            component.set("v.formatMismatch1",$A.get("$Label.c.PT_True"));
+                        }
+                        if(iframeId === $A.get("$Label.c.PT_FileSelectedvframe2")){
+                            component.set("v.formatMismatch2",$A.get("$Label.c.PT_True"));
+                        }
+                        if(iframeId === $A.get("$Label.c.PT_FileSelectedvframe3")){
+                            component.set("v.formatMismatch3",$A.get("$Label.c.PT_True"));
+                        }
+                    }
+                    
+                }
+            }
+            
+            
+            //Logic executed when a file is inserted and attached to a record.
+            if(event.data.state === $A.get("$Label.c.PT_fileUploadprocessed")){
+                
+               
+                var errHandler = event.data.messageType;
+                var file1selected = component.get("v.file1selected");
+                var file2selected = component.get("v.file2selected");
+                var file3selected = component.get("v.file3selected");
+                var iframeId = component.get("v.vfFrame");                
+                if(event.data.iframe === iframeId){
+                    if(event.data.messageType!==$A.get("$Label.c.PT_FileUpload_Error")){
+                        if(iframeId === $A.get("$Label.c.PT_FileSelectedvframe1") ){
+                            component.set("v.uploadFlag1", $A.get("$Label.c.PT_Uploaded"));
+                        }
+                        if(iframeId === $A.get("$Label.c.PT_FileSelectedvframe2") ){
+                            component.set("v.uploadFlag2", $A.get("$Label.c.PT_Uploaded"));
+                        }
+                        if(iframeId === $A.get("$Label.c.PT_FileSelectedvframe3") ){
+                            component.set("v.uploadFlag3", $A.get("$Label.c.PT_Uploaded"));
+                        }
+                    }
+                    
+                    else{
+                        if((iframeId === $A.get("$Label.c.PT_FileSelectedvframe1") && file1selected===$A.get("$Label.c.PT_True"))||
+                           (iframeId === $A.get("$Label.c.PT_FileSelectedvframe2") && file2selected===$A.get("$Label.c.PT_True"))||
+                           (iframeId === $A.get("$Label.c.PT_FileSelectedvframe3") && file3selected===$A.get("$Label.c.PT_True"))){
+
+                                helper.throwErrorMsg(component,$A.get("$Label.c.PT_ErrFileUpload"),helper);
+                            
+                            
+                        }
+                        
+                        if(iframeId === $A.get("$Label.c.PT_FileSelectedvframe1")){
+                            if(file1selected===$A.get("$Label.c.PT_True")){
+                                component.set("v.uploadFlag1", $A.get("$Label.c.PT_Uploaded"));                              
+                            }
+                            else{
+                                component.set("v.fileNotselected",$A.get("$Label.c.PT_FileSelectedvframe1"));
+                            }
+                        } 
+                        if(iframeId === $A.get("$Label.c.PT_FileSelectedvframe2")){
+                            if(file2selected===$A.get("$Label.c.PT_True")){
+                                component.set("v.uploadFlag2", $A.get("$Label.c.PT_Uploaded"));
+                            }
+                            else{
+                                component.set("v.fileNotselected",$A.get("$Label.c.PT_FileSelectedvframe2"));
+                            }
+                        }
+                        
+                        
+                        if(iframeId === $A.get("$Label.c.PT_FileSelectedvframe3")){
+                            if(file3selected===$A.get("$Label.c.PT_True")){
+                                component.set("v.uploadFlag3", $A.get("$Label.c.PT_Uploaded"));
+                            }
+                            else{
+                                component.set("v.fileNotselected",$A.get("$Label.c.PT_FileSelectedvframe3"));
+                            }
+                        }
+                        
+                    } 
+                }
+            } 
+            
+        }, false);
+    },
+    
+    
+    
+    /***********************************************************************************************
+ * Author : Sharan Sukesh
+ * Method Name : sendMessage
+ * Description : This method is used to send messages to the VF page on click of the confirm button
+ ************************************************************************************************/     
+    
+    sendMessage: function(component, helper, message){
+        //Send message to VF
+        
+        //message.origin = window.location.hostname;
+        //message.origin = "four420-openkbms.cs86.force.com";
+        message.origin = $A.get("$Label.c.PT_CommunityHost");
+        var vframename = component.get("v.vfFrame");
+        var iframe = document.getElementById(vframename);
+        var vfWindow = iframe.contentWindow;
+        vfWindow.postMessage(message, component.get("v.vfHost"));
+        
+    },
+    
+    
+    // Throws the error as toast message as part of request field validation checks.
+    throwErrorMsg : function(component,errMsg,helper) 
+    { 
+        var resultsToast = $A.get("e.force:showToast");
+        if(resultsToast)
+        {    
+            resultsToast.setParams({"title": "Errore","message": errMsg,"type":"error","mode":"pester"});
+            resultsToast.fire();
+        }            
+    },
+})

@@ -1,0 +1,26 @@
+.THIS .vfFrame{
+   border: 1px dashed;
+   border-width: 1.2px;
+   border-color: #CCC;
+   background-color:#FFF;
+   background:#FFF;
+   border-radius:3px;
+   padding: 2.5px;
+   margin-bottom:5px;
+   margin-top: 5px;
+}
+
+.THIS .vfFrame1{
+   background-color:#FFF;
+   background:#FFF;
+   padding: 2.5px;
+   margin-bottom:5px;
+   margin-top: 5px;
+}
+
+.THIS .uploadicon{
+   border:none;
+   position:relative;
+   margin-left:0px;
+  cursor:pointer;
+}
